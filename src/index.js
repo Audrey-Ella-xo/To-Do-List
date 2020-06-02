@@ -1,3 +1,5 @@
+import './style.css';
+
 const dom = (() => {
     // we will create an object for local storage
     const storage = {
