@@ -61,9 +61,8 @@
 This project is a simple Todo list application that was done in an effort to learn about the use of javascript factory functions, module pattern, Single Responsibility and Tightly Coupled Objects with HTML and CSS.
 
 #### Screenshot
-![image](https://user-images.githubusercontent.com/54140453/81751556-947eab00-94a7-11ea-9ea9-32337e2209f8.png)
-![image](https://user-images.githubusercontent.com/54140453/81751758-f4755180-94a7-11ea-8276-dcd304be1a36.png)
-![image](https://user-images.githubusercontent.com/54140453/81751786-06ef8b00-94a8-11ea-848a-5b63a2282906.png)
+![image](https://user-images.githubusercontent.com/54140453/83572611-cb356780-a521-11ea-89ca-e6a0e47228cb.png)
+![image](https://user-images.githubusercontent.com/54140453/83572661-de483780-a521-11ea-9f73-285b3a0d3bb0.png)
 ### Installation
 
 To get a local copy up and running follow these simple example steps.
