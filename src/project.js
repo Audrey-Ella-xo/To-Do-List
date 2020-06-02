@@ -15,16 +15,16 @@ const Project = () => {
   const newProjectTodo = () => {
       state.todos.push(newTodo());
   }
-
-  // reset all todos properties ralated to a project
+  // reset all todos
   const resetTodos = () => {
-      state.todos.forEach( todo => {
-        todo.todoSetters.forEach( (setter, index) => {
-          index !== (todo.todoSetters.length - 1) ? setter('') : setter(false);
-        });
-      });
+    state.todos = [];
   }
-
+  
+  // reset a specific todo
+  const resetTodo = (index) => {
+      state.todos[index] = '';
+  }
+  
   const getTodos = () => {
       return state.todos;
   }
@@ -35,13 +35,13 @@ const Project = () => {
       return state.todos[getTodosLength() - 1];
   }
   return {
-      setName,
-      getName,
-      newProjectTodo,
-      resetTodos,
-      getTodos,
-      getTodosLength,
-      getLastTodo
+    setName,
+    getName,
+    newProjectTodo,
+    resetTodos,
+    resetTodo,
+    getTodos,
+    getLastTodo
   }
 }
 export default Project;
