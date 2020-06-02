@@ -31,7 +31,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
-      title: 'Restaurant Page',
+      title: 'Todo List',
     }),
   ],
 };
