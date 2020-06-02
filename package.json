@@ -4,7 +4,10 @@
   "description": "To do list project to practice Javascript.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "webpack": "webpack --watch",
+    "server": "webpack-dev-server --open"
   },
   "repository": {
     "type": "git",
