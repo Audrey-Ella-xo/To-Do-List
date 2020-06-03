@@ -126,34 +126,6 @@ const dom = (() => {
     selectors.projects = [];
   };
 
-  // render the created project
-  const renderProjects = (projects) => {
-    projects.forEach((project, index) => {
-      setNewProjectDiv();
-      createProjectDiv(index);
-      appendElementsInsideProject(getNewProjectDiv(), project.name);
-    });
-  };
-
-  // add button click event Listner method
-  const createProjectMacro = (e) => {
-    e.preventDefault();
-    if (validateProjectInput()) {
-      newProject();
-      setProjectStorage(storage.projects.length - 1, selectors.addProjectInput.value);
-      // update localStorage
-      localStorage.setItem('projects', JSON.stringify(storage.projects));
-      refreshProjects();
-      renderProjects(JSON.parse(localStorage.getItem('projects')));
-      // reset input field
-      selectors.addProjectInput.value = '';
-    }
-  };
-
-  const createProjectEvent = () => {
-    selectors.addProjectButton.addEventListener('click', createProjectMacro);
-  };
-
   const appendTodoValues = (todosInputs, todoObject, todoSection) => {
     todosInputs.forEach(input => {
       const p = document.createElement('p');
@@ -210,6 +182,26 @@ const dom = (() => {
     });
   };
 
+  // add button click event Listner method
+  const createProjectMacro = (e) => {
+    e.preventDefault();
+    if (validateProjectInput()) {
+      const todosInputs = ['Title', 'Description', 'Date', 'priority', 'Note', 'Done'];
+      newProject();
+      setProjectStorage(storage.projects.length - 1, selectors.addProjectInput.value);
+      // update localStorage
+      localStorage.setItem('projects', JSON.stringify(storage.projects));
+      refreshProjects();
+      renderProjectsAndTodos(JSON.parse(localStorage.getItem('projects')), todosInputs);
+      // reset input field
+      selectors.addProjectInput.value = '';
+    }
+  };
+
+  const createProjectEvent = () => {
+    selectors.addProjectButton.addEventListener('click', createProjectMacro);
+  };
+
   // remove button click event Listner method
   const removeProjectMacro = (e) => {
     if (e.target && e.target.className === 'remove-project-btns') {
@@ -235,13 +227,17 @@ const dom = (() => {
   };
 
   // input tag generator with label
-  const todoFormInputGenerator = (container, title, type) => {
+  const todoFormInputGenerator = (container, title, type, value) => {
     const label = document.createElement('label');
     label.appendChild(document.createTextNode(title));
     const input = document.createElement('input');
     input.setAttribute('type', type);
     if (type === 'date') {
       input.setAttribute('value', dateNow());
+    } else if (type === 'checkbox') {
+      input.checked = value;
+    } else {
+      input.setAttribute('value', value);
     }
     container.appendChild(label);
     container.appendChild(input);
@@ -250,7 +246,7 @@ const dom = (() => {
   };
 
   // select tag generator with label
-  const todoFormSelectGenerator = (container) => {
+  const todoFormSelectGenerator = (container, value) => {
     const label = document.createElement('label');
     label.appendChild(document.createTextNode('Priority:'));
     const priority = document.createElement('select');
@@ -266,6 +262,7 @@ const dom = (() => {
     priority.appendChild(option1);
     priority.appendChild(option2);
     priority.appendChild(option3);
+    priority.selectedIndex = value;
     container.appendChild(label);
     container.appendChild(priority);
     // getting select element inside the new todos selector
@@ -284,17 +281,17 @@ const dom = (() => {
   // generate from using previous methods
   const createTodoForm = (container) => {
     // todo title
-    todoFormInputGenerator(container, 'Title', 'text');
+    todoFormInputGenerator(container, 'Title', 'text', '');
     // todo description
-    todoFormInputGenerator(container, 'Description', 'text');
+    todoFormInputGenerator(container, 'Description', 'text', '');
     // todo date
-    todoFormInputGenerator(container, 'Date', 'date');
+    todoFormInputGenerator(container, 'Date', 'date', '');
     // todo Priority
-    todoFormSelectGenerator(container);
+    todoFormSelectGenerator(container, 1);
     // todo note
-    todoFormInputGenerator(container, 'Note', 'text');
+    todoFormInputGenerator(container, 'Note', 'text', '');
     // todo checkbox
-    todoFormInputGenerator(container, 'Done', 'checkbox');
+    todoFormInputGenerator(container, 'Done', 'checkbox', '');
     // submit button
     todoFormSubmitGenerator(container);
   };
@@ -434,15 +431,42 @@ const dom = (() => {
     document.addEventListener('click', createTodoMacro);
   };
 
+  const refillEditTodoForm = (container, todoObject) => {
+    Object.entries(todoObject).forEach(propsVal => {
+      if (propsVal[0] === 'title' || propsVal[0] === 'description' || propsVal[0] === 'note') {
+        todoFormInputGenerator(container, propsVal[0].charAt(0).toUpperCase() + propsVal[0].slice(1), 'text', propsVal[1]);
+      } else if (propsVal[0] === 'date') {
+        todoFormInputGenerator(container, propsVal[0].charAt(0).toUpperCase() + propsVal[0].slice(1), 'date', propsVal[1]);
+      } else if (propsVal[0] === 'done') {
+        todoFormInputGenerator(container, propsVal[0].charAt(0).toUpperCase() + propsVal[0].slice(1), 'checkbox', propsVal[1]);
+      } else if (propsVal[1] === 'high') {
+        todoFormSelectGenerator(container, 0);
+      } else if (propsVal[1] === 'medium') {
+        todoFormSelectGenerator(container, 1);
+      } else {
+        todoFormSelectGenerator(container, 2);
+      }
+    });
+  };
+
   const editTodoMacro = (e) => {
     if (e.target && e.target.className === 'edit-todo') {
       e.preventDefault();
+      // selecting the project
+      const project = e.target.parentNode.parentNode;
       // selecting the todo section
       const todo = e.target.parentNode;
       // remove rendred data
       deleteTodoRendredElements(todo);
-      // re-render todo form
-      createTodoForm(todo);
+      // getting index for selectors todos array
+      const todosIndex = todo.id.match(/\d+$/)[0];
+      // getting values of todo object
+      // eslint-disable-next-line max-len
+      const todoObject = storage.projects[parseInt(project.id, 10) - 1].todos[parseInt(todosIndex, 10) - 1];
+      // refill&render todo form fields with previous todo data
+      refillEditTodoForm(todo, todoObject);
+      // render submit button
+      todoFormSubmitGenerator(todo);
     }
   };
 
@@ -482,11 +506,17 @@ const dom = (() => {
     e.preventDefault();
     const todosInputs = ['Title', 'Description', 'Date', 'priority', 'Note', 'Done'];
     const projects = JSON.parse(localStorage.getItem('projects'));
-    if (projects !== null) {
+    if (projects.length === 0 || (projects.length === 1 && projects[0].name === 'Default' && projects[0].todos.length === 0)) {
+      // create default project
+      newProject();
+      setProjectStorage(storage.projects.length - 1, 'Default');
+      // update localStorage
+      localStorage.setItem('projects', JSON.stringify(storage.projects));
+    } else {
       // filling storage object with localStorage data
       storage.projects = JSON.parse(localStorage.getItem('projects'));
-      renderProjectsAndTodos(projects, todosInputs);
     }
+    renderProjectsAndTodos(projects, todosInputs);
   };
 
   const renderLocalStorageDataEvent = () => {
