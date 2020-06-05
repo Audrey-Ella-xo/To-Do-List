@@ -1,11 +1,7 @@
+import Storage from './storage';
 import './style.css';
 
 const dom = (() => {
-  // we will create an object for local storage
-  const storage = {
-    projects: [],
-  };
-
   // The following selectors are dynamically generated (not affected by event listening):
   //   contentDiv: the parent of all dynamically generated data
   //   addProjectInput: input field used to create a new project
@@ -17,11 +13,6 @@ const dom = (() => {
     body: document.querySelector('body'),
     projects: [],
     todos: [],
-  };
-
-  // generate a project object
-  const newProject = () => {
-    storage.projects.push({});
   };
 
   // create div the contains all dynamically generated data
@@ -115,8 +106,8 @@ const dom = (() => {
 
   // store input value inside storage object
   const setProjectStorage = (index, value) => {
-    storage.projects[index].name = value;
-    storage.projects[index].todos = [];
+    Storage.setStorageProjectName(index, value);
+    Storage.setStorageProjectTodos(index, []);
   };
 
   const refreshProjects = () => {
@@ -187,10 +178,10 @@ const dom = (() => {
     e.preventDefault();
     if (validateProjectInput()) {
       const todosInputs = ['Title', 'Description', 'Date', 'priority', 'Note', 'Done'];
-      newProject();
-      setProjectStorage(storage.projects.length - 1, selectors.addProjectInput.value);
+      Storage.newProject();
+      setProjectStorage(Storage.getStorageProjectsLength() - 1, selectors.addProjectInput.value);
       // update localStorage
-      localStorage.setItem('projects', JSON.stringify(storage.projects));
+      localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
       refreshProjects();
       renderProjectsAndTodos(JSON.parse(localStorage.getItem('projects')), todosInputs);
       // reset input field
@@ -208,9 +199,9 @@ const dom = (() => {
       e.preventDefault();
       const todosInputs = ['Title', 'Description', 'Date', 'priority', 'Note', 'Done'];
       // delete project from storage
-      storage.projects.splice(parseInt(e.target.id, 10) - 1, 1);
+      Storage.deleteProjectFromStorage(parseInt(e.target.id, 10) - 1);
       // update localStorage
-      localStorage.setItem('projects', JSON.stringify(storage.projects));
+      localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
       refreshProjects();
       renderProjectsAndTodos(JSON.parse(localStorage.getItem('projects')), todosInputs);
     }
@@ -341,10 +332,12 @@ const dom = (() => {
       // storing values inside storage object
       const property = input.toLowerCase();
       if (input !== 'Done') {
-        storageTodoObject[property] = todoFormElement[input].value;
+        // eslint-disable-next-line max-len
+        Storage.setStorageProjectTodoProps(storageTodoObject, property, todoFormElement[input].value);
       } else {
         // checkbox case
-        storageTodoObject[property] = todoFormElement[input].checked;
+        // eslint-disable-next-line max-len
+        Storage.setStorageProjectTodoProps(storageTodoObject, property, todoFormElement[input].checked);
       }
     });
   };
@@ -395,25 +388,24 @@ const dom = (() => {
           const todosIndex = todoSection.id.match(/\d+$/)[0];
           // getting project's todo object
           // eslint-disable-next-line max-len
-          storageTodoInstance = storage.projects[parseInt(project.id, 10) - 1].todos[parseInt(todosIndex, 10) - 1];
+          storageTodoInstance = Storage.getStorageProjectTodo(parseInt(project.id, 10) - 1, parseInt(todosIndex, 10) - 1);
           // updating input values inside todo instance
           storeInputValuesInsideTodoObject(storageTodoInstance, todoSection, todosInputs);
           // update localStorage
-          localStorage.setItem('projects', JSON.stringify(storage.projects));
+          localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
           // getting edited todo from updated local storage
           const todoLocalStorage = JSON.parse(localStorage.getItem('projects'))[parseInt(project.id, 10) - 1].todos[parseInt(todosIndex, 10) - 1];
           // re-render updated todo
           rerenderTodoSection(project, todosInputs, todoLocalStorage, todoSection);
         } else {
           // creating a new todo instance of the chosen project
-          storage.projects[parseInt(project.id, 10) - 1].todos.push({});
+          Storage.newTodo(parseInt(project.id, 10) - 1);
           // getting the new created todo object
-          const { length } = storage.projects[parseInt(project.id, 10) - 1].todos;
-          storageTodoInstance = storage.projects[parseInt(project.id, 10) - 1].todos[length - 1];
+          storageTodoInstance = Storage.getProjectLastTodo(parseInt(project.id, 10) - 1);
           // storing input values inside todo instance
           storeInputValuesInsideTodoObject(storageTodoInstance, todoSection, todosInputs);
           // update localStorage
-          localStorage.setItem('projects', JSON.stringify(storage.projects));
+          localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
           // getting updated localStorage todos of the specific project
           const todosLocalStorage = JSON.parse(localStorage.getItem('projects'))[parseInt(project.id, 10) - 1].todos;
           // refresh todos
@@ -462,7 +454,7 @@ const dom = (() => {
       const todosIndex = todo.id.match(/\d+$/)[0];
       // getting values of todo object
       // eslint-disable-next-line max-len
-      const todoObject = storage.projects[parseInt(project.id, 10) - 1].todos[parseInt(todosIndex, 10) - 1];
+      const todoObject = Storage.getStorageProjectTodo(parseInt(project.id, 10) - 1, parseInt(todosIndex, 10) - 1);
       // refill&render todo form fields with previous todo data
       refillEditTodoForm(todo, todoObject);
       // render submit button
@@ -487,9 +479,9 @@ const dom = (() => {
       // getting index for selectors todos array
       const todosIndex = todo.id.match(/\d+$/)[0];
       // delete todo instance
-      storage.projects[parseInt(project.id, 10) - 1].todos.splice(parseInt(todosIndex, 10) - 1, 1);
+      Storage.deleteTodoFromStorage(parseInt(project.id, 10) - 1, parseInt(todosIndex, 10) - 1);
       // update localStorage
-      localStorage.setItem('projects', JSON.stringify(storage.projects));
+      localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
       // getting todos of that specific project from localStorage
       const todosLocalStorage = JSON.parse(localStorage.getItem('projects'))[parseInt(project.id, 10) - 1].todos;
       // render todos
@@ -508,13 +500,13 @@ const dom = (() => {
     const projects = JSON.parse(localStorage.getItem('projects'));
     if (projects.length === 0 || (projects.length === 1 && projects[0].name === 'Default' && projects[0].todos.length === 0)) {
       // create default project
-      newProject();
-      setProjectStorage(storage.projects.length - 1, 'Default');
+      Storage.newProject();
+      setProjectStorage(Storage.getStorageProjectsLength() - 1, 'Default');
       // update localStorage
-      localStorage.setItem('projects', JSON.stringify(storage.projects));
+      localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
     } else {
       // filling storage object with localStorage data
-      storage.projects = JSON.parse(localStorage.getItem('projects'));
+      Storage.setProjects(JSON.parse(localStorage.getItem('projects')));
     }
     renderProjectsAndTodos(projects, todosInputs);
   };
