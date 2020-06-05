@@ -1,4 +1,3 @@
-// import Project from './project';
 const Storage = (() => {
   const state = {
     projects: [],
