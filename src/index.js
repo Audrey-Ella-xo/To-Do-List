@@ -497,13 +497,15 @@ const dom = (() => {
   const renderLocalStorageDataMacro = (e) => {
     e.preventDefault();
     const todosInputs = ['Title', 'Description', 'Date', 'priority', 'Note', 'Done'];
-    const projects = JSON.parse(localStorage.getItem('projects'));
-    if (projects.length === 0 || (projects.length === 1 && projects[0].name === 'Default' && projects[0].todos.length === 0)) {
+    let projects = JSON.parse(localStorage.getItem('projects'));
+    if (projects === null || projects.length === 0 || (projects.length === 1 && projects[0].name === 'Default' && projects[0].todos.length === 0)) {
       // create default project
       Storage.newProject();
       setProjectStorage(Storage.getStorageProjectsLength() - 1, 'Default');
       // update localStorage
       localStorage.setItem('projects', JSON.stringify(Storage.getProjects()));
+      // getting new value
+      projects = JSON.parse(localStorage.getItem('projects'));
     } else {
       // filling storage object with localStorage data
       Storage.setProjects(JSON.parse(localStorage.getItem('projects')));
